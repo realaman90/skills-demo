@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 import shutil
+import zlib
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -44,6 +45,8 @@ CATEGORY_KEYWORDS = {
         "value prop",
         "value proposition",
         "benefit",
+        "brand equity",
+        "equity",
         "claim",
         "proof point",
         "audience",
@@ -54,6 +57,9 @@ CATEGORY_KEYWORDS = {
         "category",
         "competitive",
         "differentiator",
+        "differentiation",
+        "salience",
+        "blue ocean",
         "market",
     ],
     CAT_VISUAL: [
@@ -212,18 +218,178 @@ def read_text_file(path: Path) -> str:
     return path.read_text(encoding="utf-8", errors="ignore")
 
 
+def decode_pdf_escaped_string(value: str) -> str:
+    result: list[str] = []
+    i = 0
+    while i < len(value):
+        ch = value[i]
+        if ch != "\\":
+            result.append(ch)
+            i += 1
+            continue
+        i += 1
+        if i >= len(value):
+            break
+        esc = value[i]
+        if esc in ("\\", "(", ")"):
+            result.append(esc)
+            i += 1
+            continue
+        if esc == "n":
+            result.append("\n")
+            i += 1
+            continue
+        if esc == "r":
+            result.append("\r")
+            i += 1
+            continue
+        if esc == "t":
+            result.append("\t")
+            i += 1
+            continue
+        if esc == "b":
+            result.append("\b")
+            i += 1
+            continue
+        if esc == "f":
+            result.append("\f")
+            i += 1
+            continue
+        if esc.isdigit():
+            octal = esc
+            i += 1
+            for _ in range(2):
+                if i < len(value) and value[i].isdigit():
+                    octal += value[i]
+                    i += 1
+                else:
+                    break
+            try:
+                result.append(chr(int(octal, 8)))
+            except Exception:
+                pass
+            continue
+        result.append(esc)
+        i += 1
+    return "".join(result)
+
+
+def sanitize_line(raw: str) -> str:
+    line = "".join(ch for ch in raw if ch.isprintable())
+    line = re.sub(r"\s+", " ", line).strip()
+    return line
+
+
+def is_likely_pdf_metadata(line: str) -> bool:
+    return bool(
+        re.search(
+            r"(author\(|creator\(|flatedecode|pdfdocencoding|xobject|procset|structparents|viewerpreferences|linearized|type\s*/|metadata|fontname|basefont|baseencoding|registry\(|supplement|ordering\(|xmp core|rdf:description|rdf:|xmlns:|adobe:ns:meta|x:xmptk|ascent|capheight|fontbbox|descent|charset|cidsysteminfo|acrobat distiller|mailto:)",
+            line,
+            flags=re.IGNORECASE,
+        )
+    )
+
+
+def is_meaningful_line(raw: str) -> bool:
+    line = sanitize_line(raw)
+    if len(line) < 18:
+        return False
+    if re.fullmatch(r"[0-9A-Fa-f]{12,}", line):
+        return False
+    if "/" in line and "http" not in line.lower():
+        return False
+    if line.count("/") >= 3:
+        return False
+    if is_likely_pdf_metadata(line):
+        return False
+    if re.search(
+        r"(flatedecode|pdfdocencoding|xobject|procset|structparents|viewerpreferences|linearized|type/catalog|metadata\s+\d)",
+        line,
+        flags=re.IGNORECASE,
+    ):
+        return False
+    visible = re.sub(r"\s+", "", line)
+    if not visible:
+        return False
+    letters = sum(1 for ch in visible if ch.isalpha())
+    digits = sum(1 for ch in visible if ch.isdigit())
+    if letters < 6:
+        return False
+    if digits > letters * 1.5:
+        return False
+    ascii_chars = sum(1 for ch in line if ord(ch) < 128)
+    if ascii_chars / max(1, len(line)) < 0.9:
+        return False
+    allowed_chars = sum(
+        1
+        for ch in line
+        if ch.isalnum() or ch.isspace() or ch in ".,;:'\"!?()-/&%+"
+    )
+    if allowed_chars / max(1, len(line)) < 0.85:
+        return False
+    if len(re.findall(r"[A-Za-z]{3,}", line)) < 3:
+        return False
+    return True
+
+
+def extract_pdf_text_fragments_from_blob(blob: bytes) -> list[str]:
+    decoded = blob.decode("latin-1", errors="ignore")
+    fragments: list[str] = []
+
+    for match in re.finditer(r"\(((?:\\.|[^\\)])*)\)\s*Tj", decoded):
+        text = decode_pdf_escaped_string(match.group(1))
+        text = sanitize_line(text)
+        if is_meaningful_line(text):
+            fragments.append(text)
+
+    for match in re.finditer(r"\[(.*?)\]\s*TJ", decoded, flags=re.DOTALL):
+        array_blob = match.group(1)
+        for text_match in re.finditer(r"\(((?:\\.|[^\\)])*)\)", array_blob):
+            text = decode_pdf_escaped_string(text_match.group(1))
+            text = sanitize_line(text)
+            if is_meaningful_line(text):
+                fragments.append(text)
+
+    for match in re.finditer(r"\(((?:\\.|[^\\)])*)\)\s*['\"]", decoded):
+        text = decode_pdf_escaped_string(match.group(1))
+        text = sanitize_line(text)
+        if is_meaningful_line(text):
+            fragments.append(text)
+
+    # Fallback for PDFs where text operators are hard to parse.
+    if not fragments:
+        for match in re.finditer(r"[A-Za-z][A-Za-z0-9 ,.;:()'\"/&+\-]{20,}", decoded):
+            text = sanitize_line(match.group(0))
+            if is_meaningful_line(text):
+                fragments.append(text)
+
+    return fragments
+
+
 def extract_pdf_text_best_effort(path: Path) -> str:
     data = path.read_bytes()
-    decoded = data.decode("latin-1", errors="ignore")
-    chunks = re.findall(r"[A-Za-z0-9][A-Za-z0-9 ,.;:()'\"/%$@&+\-\n]{25,}", decoded)
-    cleaned: list[str] = []
-    for chunk in chunks:
-        line = re.sub(r"\s+", " ", chunk).strip()
-        if len(line) >= 25:
-            cleaned.append(line)
-        if len(cleaned) >= 20:
+    blobs: list[bytes] = [data]
+
+    stream_re = re.compile(rb"stream\r?\n(.*?)\r?\nendstream", flags=re.DOTALL)
+    for match in stream_re.finditer(data):
+        raw_stream = match.group(1)
+        blobs.append(raw_stream)
+        for wbits in (zlib.MAX_WBITS, -zlib.MAX_WBITS):
+            try:
+                decompressed = zlib.decompress(raw_stream, wbits=wbits)
+                blobs.append(decompressed)
+                break
+            except Exception:
+                continue
+
+    fragments: list[str] = []
+    for blob in blobs:
+        fragments.extend(extract_pdf_text_fragments_from_blob(blob))
+        if len(fragments) >= 250:
             break
-    return "\n".join(cleaned)[:5000]
+
+    cleaned = unique_keep_order([frag for frag in fragments if is_meaningful_line(frag)])
+    return "\n".join(cleaned[:120])[:12000]
 
 
 def classify_doc(rel_path: Path, text: str) -> set[str]:
@@ -358,6 +524,21 @@ def copy_source_docs(skill_dir: Path, docs: list[DocRecord]) -> dict[str, str]:
         used_names.add(name)
         source_map[rel_key] = name
         shutil.copy2(doc.src_path, source_dir / name)
+        if doc.extension == ".pdf":
+            extract_path = source_dir / f"{name}.extract.txt"
+            lines = candidate_lines(doc.text)
+            if lines:
+                extract_body = "\n".join(lines[:120])
+            else:
+                extract_body = "No extractable quote."
+            extract_path.write_text(
+                (
+                    f"# Extracted Text: {name}\n\n"
+                    f"Original doc: docs/{rel_key}\n\n"
+                    f"{extract_body}\n"
+                ),
+                encoding="utf-8",
+            )
     return source_map
 
 
@@ -370,8 +551,10 @@ def candidate_lines(text: str) -> list[str]:
         if line.startswith("```"):
             continue
         line = line.lstrip("#").strip()
-        line = re.sub(r"\s+", " ", line)
-        if len(line) < 25:
+        line = sanitize_line(line)
+        if len(line) < 18:
+            continue
+        if not is_meaningful_line(line):
             continue
         if len(line) > 220:
             line = f"{line[:220].rstrip()}..."
@@ -422,7 +605,9 @@ def collect_evidence(
 
         for line in selected:
             source_name = source_map.get(rel_key, safe_source_name(doc.rel_path))
-            evidence.append(f"- {line} (from: source/{source_name})")
+            evidence.append(
+                f'- "{line}" (from: docs/{rel_key}; source: source/{source_name})'
+            )
             if len(evidence) >= limit:
                 return unique_keep_order(evidence)
 
@@ -610,17 +795,47 @@ def render_pdf_summaries_md(docs: list[DocRecord], source_map: dict[str, str]) -
         source_name = source_map.get(rel_key, safe_source_name(doc.rel_path))
         inferred_topic = infer_topic_from_filename(doc.rel_path)
         extract_lines = candidate_lines(doc.text)
-        excerpt = "Not specified in docs."
+        excerpt = "No extractable quote."
         if extract_lines:
             excerpt = extract_lines[0]
         lines.extend(
             [
                 f"## {source_name}",
-                f"- Inferred topic: {inferred_topic} (from: source/{source_name})",
-                f"- Extractable text excerpt: {excerpt} (from: source/{source_name})",
+                f"- Original doc: docs/{rel_key}",
+                f"- Inferred topic: {inferred_topic} (from: docs/{rel_key}; source: source/{source_name})",
+                f'- Extractable text excerpt: "{excerpt}" (from: docs/{rel_key}; source: source/{source_name})',
                 "",
             ]
         )
+
+    return "\n".join(lines).rstrip()
+
+
+def render_source_quotes_md(docs: list[DocRecord], source_map: dict[str, str]) -> str:
+    lines = [
+        "# SOURCE_QUOTES",
+        "",
+        "Short quote bank from source docs for citations in final answers.",
+        "",
+    ]
+    if not docs:
+        lines.append("Not specified in docs.")
+        return "\n".join(lines)
+
+    for doc in docs:
+        rel_key = doc.rel_path.as_posix()
+        source_name = source_map.get(rel_key, safe_source_name(doc.rel_path))
+        lines.append(f"## {source_name}")
+        lines.append(f"- Original doc: docs/{rel_key}")
+        extracted = candidate_lines(doc.text)
+        if extracted:
+            for quote in extracted[:3]:
+                lines.append(
+                    f'- "{quote}" (from: docs/{rel_key}; source: source/{source_name})'
+                )
+        else:
+            lines.append(f"- No extractable quote. (from: docs/{rel_key})")
+        lines.append("")
 
     return "\n".join(lines).rstrip()
 
@@ -657,6 +872,7 @@ def render_index_md(
             "- normalized/EXAMPLES.md",
             "- normalized/CONSTRAINTS.md",
             "- normalized/PDF_SUMMARIES.md",
+            "- normalized/SOURCE_QUOTES.md",
             "",
             "## Gaps",
         ]
@@ -692,7 +908,7 @@ outputs_schema:
   "sources_used": [
     {{
       "quote": "string",
-      "citation": "references/... or source/...",
+      "citation": "docs/<original-file> (preferred) or source/<copied-file>",
       "lines": "start-end (optional)"
     }}
   ]
@@ -714,19 +930,20 @@ steps:
    - terminology: `references/normalized/GLOSSARY.md`
 5. If source PDFs are relevant, read `references/normalized/PDF_SUMMARIES.md` before drafting.
 6. If a needed detail is missing, call `search_docs` (or `run_tool` fallback) with focused keywords and use only returned hits.
-7. For each important claim, include evidence with this format in `Sources Used`: `"<short quote>" (from: <path>, lines: <start-end if known>)`.
+7. For each important claim, include evidence with this format in `Sources Used`: `"<short quote>" (from: docs/<original-file>, lines: <start-end if known>)`.
 8. If quote text is unavailable (for scanned/opaque PDFs), cite file path and state "No extractable quote."
 9. Produce the answer and include a section titled exactly `Compliance Checklist`.
 10. Final answer MUST start with the verification string exactly.
 
 Compliance Checklist:
-- Voice and tone match `references/normalized/VOICE.md`.
-- Messaging and claims match `references/normalized/MESSAGING.md`.
-- Terminology follows `references/normalized/GLOSSARY.md`.
-- Example style aligns with `references/normalized/EXAMPLES.md`.
-- Legal and compliance constraints checked against `references/normalized/CONSTRAINTS.md`.
+- Voice and tone are validated against loaded voice references.
+- Messaging and claims are validated against loaded messaging references.
+- Terminology is validated against loaded glossary references.
+- Example style is validated against loaded example references.
+- Legal and compliance constraints are validated against loaded constraint references.
 - Any missing rule is explicitly marked as "Not specified in docs."
 - Sources include short evidence quotes with citations, not only bare file paths.
+- Prefer citations using original document names from `docs/...` and quote bank in `references/normalized/SOURCE_QUOTES.md`.
 
 VERIFICATION STRING: {verification}
 Final answer must start with: {verification}
@@ -767,6 +984,7 @@ def build_skill(skill_id: str, docs: list[DocRecord], global_gaps: list[str]) ->
     write_text(normalized_dir / "EXAMPLES.md", render_examples_md(docs, source_map))
     write_text(normalized_dir / "CONSTRAINTS.md", render_constraints_md(docs, source_map))
     write_text(normalized_dir / "PDF_SUMMARIES.md", render_pdf_summaries_md(docs, source_map))
+    write_text(normalized_dir / "SOURCE_QUOTES.md", render_source_quotes_md(docs, source_map))
     write_text(assets_dir / "REVIEW_CHECKLIST_TEMPLATE.md", render_assets_template())
 
 

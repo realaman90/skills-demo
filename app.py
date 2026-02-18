@@ -154,6 +154,18 @@ def resolve_skill_dir(skill_id: str) -> Path:
     return SKILLS_DIR / skill_id
 
 
+def resolve_skill_id_alias(skill_id: str) -> str:
+    requested = skill_id.strip()
+    requested_dir = resolve_skill_dir(requested)
+    if requested_dir.exists():
+        return requested
+    if requested == "branding":
+        fallback = "brand-copy"
+        if resolve_skill_dir(fallback).exists():
+            return fallback
+    return requested
+
+
 def _json_response_to_dict(response: JSONResponse) -> dict[str, Any]:
     try:
         return json.loads(response.body.decode("utf-8"))
@@ -193,6 +205,23 @@ async def list_skills() -> dict[str, list[dict[str, Any]]]:
             }
         )
 
+    # Backward-compat: expose "branding" alias when brand-copy is present.
+    has_branding = any(item.get("skill_id") == "branding" for item in skills)
+    brand_copy = next((item for item in skills if item.get("skill_id") == "brand-copy"), None)
+    if (not has_branding) and brand_copy:
+        skills.insert(
+            0,
+            {
+                "skill_id": "branding",
+                "name": "Branding (Alias)",
+                "description": (
+                    "Compatibility alias that resolves to brand-copy. "
+                    + str(brand_copy.get("description", ""))
+                ),
+                "required_tools": brand_copy.get("required_tools", []),
+            },
+        )
+
     return {"skills": skills}
 
 
@@ -201,7 +230,8 @@ async def get_skill(payload: GetSkillRequest):
     if not validate_skill_id(payload.skill_id):
         return bad_request("invalid_skill_id")
 
-    skill_md = resolve_skill_dir(payload.skill_id) / "SKILL.md"
+    resolved_skill_id = resolve_skill_id_alias(payload.skill_id)
+    skill_md = resolve_skill_dir(resolved_skill_id) / "SKILL.md"
     if not skill_md.exists():
         return JSONResponse(status_code=404, content={"error": "skill_not_found"})
 
@@ -220,7 +250,8 @@ async def get_skill_file(payload: GetSkillFileRequest):
     if not normalized_path:
         return bad_request("invalid_path")
 
-    skill_dir = resolve_skill_dir(payload.skill_id)
+    resolved_skill_id = resolve_skill_id_alias(payload.skill_id)
+    skill_dir = resolve_skill_dir(resolved_skill_id)
     if not skill_dir.exists():
         return JSONResponse(status_code=404, content={"error": "skill_not_found"})
 
@@ -245,7 +276,8 @@ async def search_docs(payload: SearchDocsRequest):
     if not payload.query.strip():
         return bad_request("invalid_args", "query cannot be empty")
 
-    skill_dir = resolve_skill_dir(payload.skill_id)
+    resolved_skill_id = resolve_skill_id_alias(payload.skill_id)
+    skill_dir = resolve_skill_dir(resolved_skill_id)
     if not skill_dir.exists():
         return JSONResponse(status_code=404, content={"error": "skill_not_found"})
 

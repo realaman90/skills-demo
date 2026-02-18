@@ -1,0 +1,124 @@
+# Extracted Text: Ward.pdf
+
+Original doc: docs/Ward.pdf
+
+Adobe Illustrator CS6 (Windows)
+uuid:98BA529B53C211DCB4FDC661AEA6997C
+uuid:98BA529C53C211DCB4FDC661AEA6997C
+Springer Science+Business Media New York
+xmp.iid:97C63461F5C6E411B47C86F789762FAC
+xmp.did:97C63461F5C6E411B47C86F789762FAC
+xmp.iid:CB3922DCB7C1E4119116AB34D81C299E
+xmp.did:CB3922DCB7C1E4119116AB34D81C299E
+xmp.iid:ED034194EEC0E411992D8A086E555DA8
+xmp.iid:C93922DCB7C1E4119116AB34D81C299E
+xmp.iid:CA3922DCB7C1E4119116AB34D81C299E
+xmp.iid:BD9FD2D1191AE9119720BECECD8DF2DE
+xmp.did:BD9FD2D1191AE9119720BECECD8DF2DE
+Adobe PDF library 10.01
+Adobe Photoshop Version 9.0x211
+pdftk 1.12 - www.pdftk.com
+itext-paulo (lowagie.com)
+Public XMP Toolkit Core 4.0"
+Acrobat PDFMaker 10.1 for Word
+Adobe PDF Library 10.0
+Ehrenberg-Bass Institute
+Article.indd:Anchor 10:10)(41262
+Article.indd:Anchor 10:10)
+Article.indd:Anchor 11:11)
+Article.indd:Anchor 12:12)
+Article.indd:Anchor 13:13)
+Article.indd:Anchor 14:14)
+Article.indd:Anchor 15:15)
+Article.indd:Anchor 16:16)
+Article.indd:Anchor 17:17)
+Article.indd:Anchor 18:18)
+Article.indd:Anchor 1:1)
+Article.indd:Anchor 2:2)
+Article.indd:Anchor 3:3)
+Article.indd:Anchor 4:4)
+Article.indd:Anchor 5:5)
+Article.indd:Anchor 6:6)
+Article.indd:Anchor 7:7)
+Article.indd:Anchor 8:8)
+Article.indd:Anchor 9:9)
+Article.indd:Equa:30)(41262
+Article.indd:Tab4:39)
+Article.indd:Equa:30)
+Article.indd:Equb:31)
+Article.indd:Equc:32)
+Article.indd:Equd:33)
+Article.indd:FPar1:140)
+Article.indd:FPar2:141)
+Article.indd:FPar3:142)
+Article.indd:FPar4:143)
+Article.indd:FPar5:43)
+Article.indd:Sec10:34)
+Article.indd:Sec11:36)
+Article.indd:Sec12:38)
+Article.indd:Sec13:40)
+Article.indd:Sec14:41)
+Article.indd:Sec15:42)
+Article.indd:Sec16:44)
+Article.indd:Sec17:45)
+Article.indd:Sec18:47)
+Article.indd:Sec1:19)
+Article.indd:Sec2:20)
+Article.indd:Sec3:21)
+Article.indd:Sec4:22)
+Article.indd:Sec5:23)
+Article.indd:Sec6:24)
+Article.indd:Sec7:25)
+Article.indd:Sec8:26)
+Article.indd:Sec9:28)
+Article.indd:Tab1:27)
+Article.indd:Tab2:35)
+Article.indd:Tab3:37)
+Brand identity,Uniqueness,Herfindahl
+Building a unique brand identity: measuring the relative ownership potential of brand identity element types
+Journal of Brand Management
+Springer Nature Limited
+uuid:7eb6b391-6b73-4030-9d82-95afb2bacd38
+Adobe Document Info PDF eXtension Schema
+Mirrors crossmark:MajorVersionDate
+Mirrors crossmark:CrossmarkDomainExclusive
+Mirrors crossmark:DOI
+Mirrors crossmark:CrosMarkDomains
+A name object indicating whether the document has been modified to include trapping information
+Company creating the PDF
+Date when document was last modified
+Usual same as prism:doi
+The date when a publication was publishe.
+This element provides the url for an article or unit of content. The attribute platform is optionally allowed for situations in which multiple URLs must be specified. PRISM recommends that a subset of the PCV platform va...
+be used in conjunction with this element. NOTE: PRISM recommends against the use of the
+other value allowed in the PRISM Platform controlled vocabulary. In lieu of using
+other please reach out to the PRISM group at prism-wg
+yahoogroups.com to request addition of your term to the Platform Controlled Vocabulary.
+The Digital Object Identifier for the article. The DOI may also be used as the dc:identifier. If used as a dc:identifier, the URI form should be captured, and the bare identifier should also be captured using prism:doi....
+ISSN for an electronic version of the issue in which the resource occurs. Permits publishers to include a second ISSN, identifying an electronic version of the issue in which the resource occurs (therefore e(lectronic)Is...
+The aggregation type specifies the unit of aggregation for a content collection. Comment PRISM recommends that the PRISM Aggregation Type Controlled Vocabulary be used to provide values for this element. Note: PRISM reco...
+other value currently allowed in this controlled vocabulary. In lieu of using
+other please reach out to the PRISM group at info
+prismstandard.org to request addition of your term to the Aggregation Type Controlled Vocabulary.
+XMP Media Management Schema
+UUID based identifier for specific incarnation of a document
+The common identifier for all versions and renditions of a document.
+A reference to the original document from which this one is derived. It is a minimal reference; missing components can be assumed to be unchanged. For example, a new version might only need to specify the instance ID and...
+Identifies a portion of a document. This can be a position at which the document has been changed since the most recent event history (stEvt:changed). For a resource within an xmpMM:Ingredients list, the ResourceRef uses...
+Springer Nature ORCID Schema
+Specifies the types of author information: name and ORCID of an author.
+Gives the name of an author.
+Gives the ORCID of an author.
+Values for Journal Article Version are one of the following:&
+Submitted Manuscript Under Review&
+Corrected Version of Record&
+Enhanced Version of Record
+Closed Choice of Text
+PS-Adobe-3.0 Resource-CMap
+BeginResource: CMap (MyriadPro-SemiboldSemiCn-UCMap)
+Title: (MyriadPro-SemiboldSemiCn-UCMap callas MyriadPro-SemiboldSemiCn-UCMap 0)
+Registry (callas) def
+Ordering (MyriadPro-SemiboldSemiCn-UCMap) def
+BeginResource: CMap (MyriadPro-SemiCn-UCMap)
+Title: (MyriadPro-SemiCn-UCMap callas MyriadPro-SemiCn-UCMap 0)
+Ordering (MyriadPro-SemiCn-UCMap) def
