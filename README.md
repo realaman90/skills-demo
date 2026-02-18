@@ -109,6 +109,20 @@ cloudflared tunnel --url http://localhost:8000
 
 Copy the generated HTTPS URL and update `openapi.yaml` server URL.
 
+## Cloud deploy start command
+
+If your platform expects `main:app`, use:
+
+```bash
+uvicorn main:app --host 0.0.0.0 --port $PORT
+```
+
+Local development can still use:
+
+```bash
+uvicorn app:app --host 0.0.0.0 --port 8000 --reload
+```
+
 ## Suggested Custom GPT Instructions (router logic)
 
 Use this as a starting instruction block for your Custom GPT:
