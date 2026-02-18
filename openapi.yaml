@@ -154,6 +154,8 @@ components:
       required:
         - skill_id
         - name
+        - skill_group
+        - skill_subcategory
         - description
         - required_tools
       properties:
@@ -163,6 +165,12 @@ components:
         name:
           type: string
           example: Branding
+        skill_group:
+          type: string
+          example: branding
+        skill_subcategory:
+          type: string
+          example: copy
         description:
           type: string
           example: Umbrella brand skill for writing, reviewing, and terminology checks using available docs.

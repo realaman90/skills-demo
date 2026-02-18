@@ -120,6 +120,8 @@ SKILL_CATEGORY_TARGETS = {
 SKILL_META = {
     "branding": {
         "name": "Branding",
+        "group": "branding",
+        "subcategory": "umbrella",
         "description": "Umbrella brand skill for writing, reviewing, and terminology checks using available docs.",
         "triggers": [
             "write brand copy",
@@ -133,6 +135,8 @@ SKILL_META = {
     },
     "brand-copy": {
         "name": "Brand Copy",
+        "group": "branding",
+        "subcategory": "copy",
         "description": "Create new copy aligned with documented voice, messaging, and examples.",
         "triggers": [
             "write landing page copy",
@@ -146,6 +150,8 @@ SKILL_META = {
     },
     "brand-review": {
         "name": "Brand Review",
+        "group": "branding",
+        "subcategory": "review",
         "description": "Review draft copy against tone, messaging, terminology, and compliance constraints.",
         "triggers": [
             "review this copy",
@@ -159,6 +165,8 @@ SKILL_META = {
     },
     "messaging": {
         "name": "Messaging",
+        "group": "branding",
+        "subcategory": "messaging",
         "description": "Shape positioning and value proposition messaging from source documentation.",
         "triggers": [
             "create positioning statement",
@@ -171,6 +179,8 @@ SKILL_META = {
     },
     "glossary-enforcer": {
         "name": "Glossary Enforcer",
+        "group": "branding",
+        "subcategory": "glossary",
         "description": "Enforce preferred terminology and flag forbidden terms in outputs.",
         "triggers": [
             "enforce terminology",
@@ -890,6 +900,8 @@ def render_skill_md(skill_id: str) -> str:
     triggers = "\n".join(f"- \"{trigger}\"" for trigger in meta["triggers"])
     return f"""name: {meta["name"]}
 skill_id: {skill_id}
+skill_group: {meta["group"]}
+skill_subcategory: {meta["subcategory"]}
 description: {meta["description"]}
 triggers:
 {triggers}

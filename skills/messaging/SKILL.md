@@ -1,5 +1,7 @@
 name: Messaging
 skill_id: messaging
+skill_group: branding
+skill_subcategory: messaging
 description: Shape positioning and value proposition messaging from source documentation.
 triggers:
 - "create positioning statement"

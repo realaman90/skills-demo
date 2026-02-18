@@ -1,5 +1,7 @@
 name: Brand Review
 skill_id: brand-review
+skill_group: branding
+skill_subcategory: review
 description: Review draft copy against tone, messaging, terminology, and compliance constraints.
 triggers:
 - "review this copy"

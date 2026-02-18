@@ -1,5 +1,7 @@
 name: Glossary Enforcer
 skill_id: glossary-enforcer
+skill_group: branding
+skill_subcategory: glossary
 description: Enforce preferred terminology and flag forbidden terms in outputs.
 triggers:
 - "enforce terminology"

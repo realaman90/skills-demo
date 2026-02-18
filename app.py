@@ -69,6 +69,8 @@ def validate_skill_id(skill_id: str) -> bool:
 def parse_skill_metadata(skill_markdown: str) -> dict[str, Any]:
     skill_id = ""
     name = ""
+    skill_group = ""
+    skill_subcategory = ""
     description = ""
     required_tools: list[str] = []
     in_required_tools = False
@@ -82,6 +84,14 @@ def parse_skill_metadata(skill_markdown: str) -> dict[str, Any]:
             continue
         if line.startswith("name:"):
             name = line.split(":", 1)[1].strip().strip('"').strip("'")
+            in_required_tools = False
+            continue
+        if line.startswith("skill_group:"):
+            skill_group = line.split(":", 1)[1].strip().strip('"').strip("'")
+            in_required_tools = False
+            continue
+        if line.startswith("skill_subcategory:"):
+            skill_subcategory = line.split(":", 1)[1].strip().strip('"').strip("'")
             in_required_tools = False
             continue
         if line.startswith("description:"):
@@ -117,6 +127,8 @@ def parse_skill_metadata(skill_markdown: str) -> dict[str, Any]:
     return {
         "skill_id": skill_id,
         "name": name,
+        "skill_group": skill_group,
+        "skill_subcategory": skill_subcategory,
         "description": description,
         "required_tools": required_tools,
     }
@@ -200,6 +212,8 @@ async def list_skills() -> dict[str, list[dict[str, Any]]]:
             {
                 "skill_id": metadata["skill_id"],
                 "name": metadata["name"],
+                "skill_group": metadata["skill_group"] or "branding",
+                "skill_subcategory": metadata["skill_subcategory"] or "unspecified",
                 "description": metadata["description"],
                 "required_tools": metadata["required_tools"],
             }
@@ -214,6 +228,8 @@ async def list_skills() -> dict[str, list[dict[str, Any]]]:
             {
                 "skill_id": "branding",
                 "name": "Branding (Alias)",
+                "skill_group": "branding",
+                "skill_subcategory": "umbrella",
                 "description": (
                     "Compatibility alias that resolves to brand-copy. "
                     + str(brand_copy.get("description", ""))

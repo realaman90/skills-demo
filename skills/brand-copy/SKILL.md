@@ -1,5 +1,7 @@
 name: Brand Copy
 skill_id: brand-copy
+skill_group: branding
+skill_subcategory: copy
 description: Create new copy aligned with documented voice, messaging, and examples.
 triggers:
 - "write landing page copy"
