@@ -1,6 +1,6 @@
 openapi: 3.0.3
 info:
-  title: Skills + Tools Demo API
+  title: Agent Skills Actions API
   version: "1.0.0"
 servers:
   - url: https://YOUR_DOMAIN
@@ -11,7 +11,7 @@ paths:
       summary: Health check
       responses:
         "200":
-          description: API is healthy
+          description: API health status
           content:
             application/json:
               schema:
@@ -19,7 +19,7 @@ paths:
   /skills:
     get:
       operationId: list_skills
-      summary: List available local skills
+      summary: List all generated skills
       responses:
         "200":
           description: Skills list
@@ -30,7 +30,7 @@ paths:
   /get_skill:
     post:
       operationId: get_skill
-      summary: Get full markdown for one skill
+      summary: Fetch SKILL.md content for a skill
       requestBody:
         required: true
         content:
@@ -39,13 +39,13 @@ paths:
               $ref: "#/components/schemas/GetSkillRequest"
       responses:
         "200":
-          description: Skill markdown loaded
+          description: SKILL.md content
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/GetSkillResponse"
         "400":
-          description: Invalid skill_id
+          description: Invalid request
           content:
             application/json:
               schema:
@@ -56,25 +56,60 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-  /run_tool:
+  /get_skill_file:
     post:
-      operationId: run_tool
-      summary: Run a supported demo tool
+      operationId: get_skill_file
+      summary: Fetch a skill reference or asset file
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/RunToolRequest"
+              $ref: "#/components/schemas/GetSkillFileRequest"
       responses:
         "200":
-          description: Tool executed successfully
+          description: File content
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/RunToolResponse"
+                $ref: "#/components/schemas/GetSkillFileResponse"
         "400":
-          description: Invalid args or unknown tool
+          description: Invalid skill_id or path
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Skill or file not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /search_docs:
+    post:
+      operationId: search_docs
+      summary: Search references for query terms
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SearchDocsRequest"
+      responses:
+        "200":
+          description: Search hits
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SearchDocsResponse"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Skill not found
           content:
             application/json:
               schema:
@@ -84,7 +119,8 @@ components:
   schemas:
     HealthResponse:
       type: object
-      required: [ok]
+      required:
+        - ok
       properties:
         ok:
           type: boolean
@@ -92,23 +128,33 @@ components:
 
     SkillInfo:
       type: object
-      required: [skill_id, description, required_tools]
+      required:
+        - skill_id
+        - name
+        - description
+        - required_tools
       properties:
         skill_id:
           type: string
-          example: calc
+          example: branding
+        name:
+          type: string
+          example: Branding
         description:
           type: string
-          example: Deterministic arithmetic evaluator for one expression.
+          example: Umbrella brand skill for writing, reviewing, and terminology checks using available docs.
         required_tools:
           type: array
           items:
             type: string
-          example: [calculator]
+          example:
+            - get_skill_file
+            - search_docs
 
     ListSkillsResponse:
       type: object
-      required: [skills]
+      required:
+        - skills
       properties:
         skills:
           type: array
@@ -117,51 +163,106 @@ components:
 
     GetSkillRequest:
       type: object
-      required: [skill_id]
+      required:
+        - skill_id
       properties:
         skill_id:
           type: string
           pattern: "^[a-z0-9-]+$"
-          example: calc
+          example: branding
 
     GetSkillResponse:
       type: object
-      required: [skill_id, content, source]
+      required:
+        - skill_id
+        - content
       properties:
         skill_id:
           type: string
         content:
           type: string
-        source:
-          type: string
-          example: local
 
-    RunToolRequest:
+    GetSkillFileRequest:
       type: object
-      required: [tool_name, args]
+      required:
+        - skill_id
+        - path
       properties:
-        tool_name:
+        skill_id:
           type: string
-          enum: [calculator, now, fetch_url, save_note, list_notes]
-        args:
-          type: object
-          additionalProperties: true
+          pattern: "^[a-z0-9-]+$"
+          example: branding
+        path:
+          type: string
+          example: references/normalized/VOICE.md
 
-    RunToolResponse:
+    GetSkillFileResponse:
       type: object
-      required: [tool_name, output, data]
+      required:
+        - skill_id
+        - path
+        - content
       properties:
-        tool_name:
+        skill_id:
           type: string
-        output:
+        path:
           type: string
-        data:
-          type: object
-          additionalProperties: true
+        content:
+          type: string
+
+    SearchDocsRequest:
+      type: object
+      required:
+        - skill_id
+        - query
+      properties:
+        skill_id:
+          type: string
+          pattern: "^[a-z0-9-]+$"
+          example: branding
+        query:
+          type: string
+          example: tone and claims
+        top_k:
+          type: integer
+          minimum: 1
+          maximum: 20
+          default: 5
+
+    SearchHit:
+      type: object
+      required:
+        - path
+        - score
+        - snippet
+        - start_line
+        - end_line
+      properties:
+        path:
+          type: string
+        score:
+          type: integer
+        snippet:
+          type: string
+        start_line:
+          type: integer
+        end_line:
+          type: integer
+
+    SearchDocsResponse:
+      type: object
+      required:
+        - hits
+      properties:
+        hits:
+          type: array
+          items:
+            $ref: "#/components/schemas/SearchHit"
 
     ErrorResponse:
       type: object
-      required: [error]
+      required:
+        - error
       properties:
         error:
           type: string
