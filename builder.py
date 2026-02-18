@@ -657,10 +657,10 @@ steps:
 1. Determine request mode: writing, review, messaging, or terminology.
 2. Always call `get_skill_file` for `references/INDEX.md` first.
 3. Read the minimum needed normalized files:
-   - writing: `VOICE.md`, `MESSAGING.md`, `GLOSSARY.md`, `EXAMPLES.md`
-   - review: `VOICE.md`, `MESSAGING.md`, `GLOSSARY.md`, `CONSTRAINTS.md`
-   - messaging: `MESSAGING.md`, `EXAMPLES.md`, `CONSTRAINTS.md`
-   - terminology: `GLOSSARY.md`
+   - writing: `references/normalized/VOICE.md`, `references/normalized/MESSAGING.md`, `references/normalized/GLOSSARY.md`, `references/normalized/EXAMPLES.md`
+   - review: `references/normalized/VOICE.md`, `references/normalized/MESSAGING.md`, `references/normalized/GLOSSARY.md`, `references/normalized/CONSTRAINTS.md`
+   - messaging: `references/normalized/MESSAGING.md`, `references/normalized/EXAMPLES.md`, `references/normalized/CONSTRAINTS.md`
+   - terminology: `references/normalized/GLOSSARY.md`
 4. If a needed detail is missing, call `search_docs` with focused keywords and use only returned hits.
 5. Produce the answer and include a section titled exactly `Compliance Checklist`.
 6. Final answer MUST start with the verification string exactly.
@@ -780,4 +780,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
