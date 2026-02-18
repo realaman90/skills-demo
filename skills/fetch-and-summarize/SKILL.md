@@ -11,6 +11,13 @@ steps:
 2. Call `run_tool` with `tool_name="fetch_url"` and `args={"url":"<url>"}`.
 3. Produce a concise summary with up to 5 bullet points using the fetched text.
 4. Include the source URL in the final response.
+tool_call_format:
+run_tool(
+  tool_name="fetch_url",
+  args={
+    "url": "<the exact URL provided by the user>"
+  }
+)
 input_schema:
 {
   "url": "string (must be allowlisted by tool backend)"

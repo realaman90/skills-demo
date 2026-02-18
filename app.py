@@ -202,7 +202,11 @@ def run_now(args: dict[str, Any]) -> dict[str, Any] | JSONResponse:
 def run_fetch_url(args: dict[str, Any]) -> dict[str, Any] | JSONResponse:
     url = args.get("url")
     if not isinstance(url, str) or not url.strip():
-        return bad_request("invalid_args", "missing url")
+        return {
+            "tool_name": "fetch_url",
+            "output": "Error: missing 'url' argument",
+            "data": {},
+        }
 
     parsed = urlparse(url)
     if parsed.scheme not in {"http", "https"} or parsed.hostname not in ALLOWED_FETCH_DOMAINS:
