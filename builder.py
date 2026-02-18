@@ -585,6 +585,46 @@ def render_constraints_md(docs: list[DocRecord], source_map: dict[str, str]) -> 
     )
 
 
+def infer_topic_from_filename(rel_path: Path) -> str:
+    stem = rel_path.stem
+    words = re.findall(r"[A-Za-z0-9]+", stem)
+    if not words:
+        return "Not specified in docs."
+    return " ".join(words).strip()
+
+
+def render_pdf_summaries_md(docs: list[DocRecord], source_map: dict[str, str]) -> str:
+    pdf_docs = [doc for doc in docs if doc.extension == ".pdf"]
+    lines = ["# PDF_SUMMARIES", ""]
+    if not pdf_docs:
+        lines.append("Not specified in docs.")
+        return "\n".join(lines)
+
+    lines.append(
+        "Best-effort summaries from PDF filenames and extractable text only (no OCR)."
+    )
+    lines.append("")
+
+    for doc in pdf_docs:
+        rel_key = doc.rel_path.as_posix()
+        source_name = source_map.get(rel_key, safe_source_name(doc.rel_path))
+        inferred_topic = infer_topic_from_filename(doc.rel_path)
+        extract_lines = candidate_lines(doc.text)
+        excerpt = "Not specified in docs."
+        if extract_lines:
+            excerpt = extract_lines[0]
+        lines.extend(
+            [
+                f"## {source_name}",
+                f"- Inferred topic: {inferred_topic} (from: source/{source_name})",
+                f"- Extractable text excerpt: {excerpt} (from: source/{source_name})",
+                "",
+            ]
+        )
+
+    return "\n".join(lines).rstrip()
+
+
 def render_index_md(
     skill_id: str,
     docs: list[DocRecord],
@@ -616,6 +656,7 @@ def render_index_md(
             "- normalized/GLOSSARY.md",
             "- normalized/EXAMPLES.md",
             "- normalized/CONSTRAINTS.md",
+            "- normalized/PDF_SUMMARIES.md",
             "",
             "## Gaps",
         ]
@@ -661,9 +702,10 @@ steps:
    - review: `references/normalized/VOICE.md`, `references/normalized/MESSAGING.md`, `references/normalized/GLOSSARY.md`, `references/normalized/CONSTRAINTS.md`
    - messaging: `references/normalized/MESSAGING.md`, `references/normalized/EXAMPLES.md`, `references/normalized/CONSTRAINTS.md`
    - terminology: `references/normalized/GLOSSARY.md`
-4. If a needed detail is missing, call `search_docs` with focused keywords and use only returned hits.
-5. Produce the answer and include a section titled exactly `Compliance Checklist`.
-6. Final answer MUST start with the verification string exactly.
+4. If source PDFs are relevant, read `references/normalized/PDF_SUMMARIES.md` before drafting.
+5. If a needed detail is missing, call `search_docs` with focused keywords and use only returned hits.
+6. Produce the answer and include a section titled exactly `Compliance Checklist`.
+7. Final answer MUST start with the verification string exactly.
 
 Compliance Checklist:
 - Voice and tone match `references/normalized/VOICE.md`.
@@ -711,6 +753,7 @@ def build_skill(skill_id: str, docs: list[DocRecord], global_gaps: list[str]) ->
     write_text(normalized_dir / "GLOSSARY.md", render_glossary_md(docs, source_map))
     write_text(normalized_dir / "EXAMPLES.md", render_examples_md(docs, source_map))
     write_text(normalized_dir / "CONSTRAINTS.md", render_constraints_md(docs, source_map))
+    write_text(normalized_dir / "PDF_SUMMARIES.md", render_pdf_summaries_md(docs, source_map))
     write_text(assets_dir / "REVIEW_CHECKLIST_TEMPLATE.md", render_assets_template())
 
 

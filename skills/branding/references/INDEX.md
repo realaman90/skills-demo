@@ -11,6 +11,7 @@
 - normalized/GLOSSARY.md
 - normalized/EXAMPLES.md
 - normalized/CONSTRAINTS.md
+- normalized/PDF_SUMMARIES.md
 
 ## Gaps
 - No docs found under ./docs. Generated scaffold files only.

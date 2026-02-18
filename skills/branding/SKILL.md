@@ -34,9 +34,10 @@ steps:
    - review: `references/normalized/VOICE.md`, `references/normalized/MESSAGING.md`, `references/normalized/GLOSSARY.md`, `references/normalized/CONSTRAINTS.md`
    - messaging: `references/normalized/MESSAGING.md`, `references/normalized/EXAMPLES.md`, `references/normalized/CONSTRAINTS.md`
    - terminology: `references/normalized/GLOSSARY.md`
-4. If a needed detail is missing, call `search_docs` with focused keywords and use only returned hits.
-5. Produce the answer and include a section titled exactly `Compliance Checklist`.
-6. Final answer MUST start with the verification string exactly.
+4. If source PDFs are relevant, read `references/normalized/PDF_SUMMARIES.md` before drafting.
+5. If a needed detail is missing, call `search_docs` with focused keywords and use only returned hits.
+6. Produce the answer and include a section titled exactly `Compliance Checklist`.
+7. Final answer MUST start with the verification string exactly.
 
 Compliance Checklist:
 - Voice and tone match `references/normalized/VOICE.md`.
