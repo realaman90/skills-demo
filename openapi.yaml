@@ -8,6 +8,7 @@ paths:
   /health:
     get:
       operationId: health
+      x-openai-isConsequential: false
       summary: Health check
       responses:
         "200":
@@ -19,6 +20,7 @@ paths:
   /skills:
     get:
       operationId: list_skills
+      x-openai-isConsequential: false
       summary: List all generated skills
       responses:
         "200":
@@ -30,6 +32,7 @@ paths:
   /get_skill:
     post:
       operationId: get_skill
+      x-openai-isConsequential: false
       summary: Fetch SKILL.md content for a skill
       requestBody:
         required: true
@@ -59,6 +62,7 @@ paths:
   /get_skill_file:
     post:
       operationId: get_skill_file
+      x-openai-isConsequential: false
       summary: Fetch a skill reference or asset file
       requestBody:
         required: true
@@ -88,6 +92,7 @@ paths:
   /search_docs:
     post:
       operationId: search_docs
+      x-openai-isConsequential: false
       summary: Search references for query terms
       requestBody:
         required: true

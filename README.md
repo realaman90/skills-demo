@@ -105,3 +105,8 @@ Rules:
 - Rebuild skills after adding docs: `python builder.py`.
 - Query with narrower keywords (`"tone"`, `"claim"`, `"terminology"`).
 - Confirm content exists under `skills/<skill_id>/references/normalized` or `source`.
+
+### `run_tool` 404 or "requires approval"
+- Re-import the latest `openapi.yaml` in Custom GPT Actions so only current operations are used.
+- Confirm your actions list includes: `list_skills`, `get_skill`, `get_skill_file`, `search_docs`.
+- If a stale config still calls `run_tool`, the backend now returns a compatibility response instead of 404.

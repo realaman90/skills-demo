@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import os
 import re
+import json
 from pathlib import Path
 from typing import Any
 
@@ -34,6 +35,11 @@ class SearchDocsRequest(BaseModel):
     skill_id: str = Field(..., min_length=1)
     query: str = Field(..., min_length=1)
     top_k: int = Field(default=5, ge=1, le=20)
+
+
+class RunToolCompatRequest(BaseModel):
+    tool_name: str = Field(..., min_length=1)
+    args: dict[str, Any] = Field(default_factory=dict)
 
 
 @app.middleware("http")
@@ -146,6 +152,13 @@ def read_file_text(path: Path) -> str:
 
 def resolve_skill_dir(skill_id: str) -> Path:
     return SKILLS_DIR / skill_id
+
+
+def _json_response_to_dict(response: JSONResponse) -> dict[str, Any]:
+    try:
+        return json.loads(response.body.decode("utf-8"))
+    except Exception:
+        return {"error": "request_failed"}
 
 
 @app.get("/health", operation_id="health")
@@ -296,6 +309,109 @@ async def search_docs(payload: SearchDocsRequest):
 
     hits.sort(key=lambda item: (-int(item["score"]), item["path"]))
     return {"hits": hits[: payload.top_k]}
+
+
+@app.post("/run_tool", operation_id="run_tool_compat")
+async def run_tool_compat(payload: RunToolCompatRequest):
+    tool_name = payload.tool_name.strip()
+    args = payload.args or {}
+
+    if tool_name == "get_skill":
+        skill_id = args.get("skill_id")
+        if not isinstance(skill_id, str):
+            return {
+                "tool_name": tool_name,
+                "output": "Error: missing required arg 'skill_id'",
+                "data": {},
+            }
+        result = await get_skill(GetSkillRequest(skill_id=skill_id))
+        if isinstance(result, JSONResponse):
+            body = _json_response_to_dict(result)
+            return {
+                "tool_name": tool_name,
+                "output": f"Error: {body.get('error', 'request_failed')}",
+                "data": body,
+            }
+        return {
+            "tool_name": tool_name,
+            "output": "ok",
+            "data": result,
+        }
+
+    if tool_name == "get_skill_file":
+        skill_id = args.get("skill_id")
+        path = args.get("path")
+        if not isinstance(skill_id, str) or not isinstance(path, str):
+            return {
+                "tool_name": tool_name,
+                "output": "Error: missing required args 'skill_id' and/or 'path'",
+                "data": {},
+            }
+        result = await get_skill_file(GetSkillFileRequest(skill_id=skill_id, path=path))
+        if isinstance(result, JSONResponse):
+            body = _json_response_to_dict(result)
+            return {
+                "tool_name": tool_name,
+                "output": f"Error: {body.get('error', 'request_failed')}",
+                "data": body,
+            }
+        return {
+            "tool_name": tool_name,
+            "output": "ok",
+            "data": result,
+        }
+
+    if tool_name == "search_docs":
+        skill_id = args.get("skill_id")
+        query = args.get("query")
+        top_k = args.get("top_k", 5)
+        if not isinstance(skill_id, str) or not isinstance(query, str):
+            return {
+                "tool_name": tool_name,
+                "output": "Error: missing required args 'skill_id' and/or 'query'",
+                "data": {},
+            }
+        if not isinstance(top_k, int):
+            top_k = 5
+        result = await search_docs(
+            SearchDocsRequest(skill_id=skill_id, query=query, top_k=top_k)
+        )
+        if isinstance(result, JSONResponse):
+            body = _json_response_to_dict(result)
+            return {
+                "tool_name": tool_name,
+                "output": f"Error: {body.get('error', 'request_failed')}",
+                "data": body,
+            }
+        return {
+            "tool_name": tool_name,
+            "output": "ok",
+            "data": result,
+        }
+
+    if tool_name == "list_skills":
+        result = await list_skills()
+        return {
+            "tool_name": tool_name,
+            "output": "ok",
+            "data": result,
+        }
+
+    return {
+        "tool_name": tool_name,
+        "output": (
+            "Error: deprecated or unknown tool. Use direct Actions "
+            "`list_skills`, `get_skill`, `get_skill_file`, `search_docs`."
+        ),
+        "data": {
+            "supported_tools": [
+                "list_skills",
+                "get_skill",
+                "get_skill_file",
+                "search_docs",
+            ]
+        },
+    }
 
 
 if __name__ == "__main__":
