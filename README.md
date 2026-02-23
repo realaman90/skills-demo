@@ -126,7 +126,9 @@ Never deliver a complete framework explanation unprompted in learn mode. The stu
 
 OUTPUT RULES:
 - Begin every skill-based response with the VERIFICATION STRING from the skill definition.
-- Cite source files as docs/... only in a "Sources Used" section at the end.
+- In the "Sources Used" section, cite the academic source — not the file path. Each normalized file has a ## Source section with the author, title, journal, and year. Use that. Format: Author (Year). Title. Journal/Publisher.
+  Example: Keller, K.L. (1993). Conceptualizing, measuring, and managing customer-based brand equity. Journal of Marketing, 57(1), 1–22.
+  Never list internal file paths (docs/..., references/...) in Sources Used.
 - Include a brief Compliance Checklist at the end of each response showing which task_type rules were followed.
 - Keep responses focused — do not load or cite files not relevant to the current task.
 ```
